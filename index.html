@@ -1042,70 +1042,7 @@
     </div>
 
     <script>
-       // ==============================================
-// SISTEMA SIMPLES DE DATAS AUTOMÁTICAS
-// ==============================================
-
-// Função para obter data de hoje formatada
-function getTodayDate() {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const day = String(today.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-}
-
-// Atualizar todas as datas para hoje
-function updateAllDatesToToday() {
-    const today = new Date();
-    const formattedDate = formatDate(today.toISOString().split('T')[0]);
-    
-    // Atualizar data no cabeçalho
-    currentDateElement.textContent = formattedDate;
-    
-    // Atualizar datas nos cards
-    document.getElementById('verseDate').textContent = formattedDate;
-    document.getElementById('messageDate').textContent = formattedDate;
-    
-    // Atualizar data padrão no formulário
-    document.getElementById('devotionalDate').valueAsDate = today;
-    
-    // Atualizar ano no rodapé
-    document.getElementById('currentYear').textContent = today.getFullYear();
-    
-    console.log('Datas atualizadas para:', formattedDate);
-}
-
-// Verificar se precisa atualizar as datas (quando o dia muda)
-function checkDateUpdate() {
-    const lastUpdate = localStorage.getItem('lastDateUpdate');
-    const today = getTodayDate();
-    
-    if (lastUpdate !== today) {
-        updateAllDatesToToday();
-        localStorage.setItem('lastDateUpdate', today);
-    }
-}
-
-// Modificar a função init() para incluir verificação de data
-const originalInit = init;
-init = function() {
-    originalInit();
-    checkDateUpdate();
-    setInterval(checkDateUpdate, 60000); // Verificar a cada minuto
-};
-
-// Modificar a função updateUIForLoggedInUser para atualizar datas
-const originalUpdateUI = updateUIForLoggedInUser;
-updateUIForLoggedInUser = function() {
-    originalUpdateUI();
-    setTimeout(checkDateUpdate, 1000);
-};
-
-// Atualizar datas imediatamente
-updateAllDatesToToday();
-
-console.log('Sistema de datas automáticas ativado!');
+     
         // ==============================================
         // CONFIGURAÇÃO DO FIREBASE (ATUALIZADA)
         // ==============================================
@@ -1802,5 +1739,6 @@ console.log('Sistema de datas automáticas ativado!');
     </script>
     </body>
     </html>
+
 
 
