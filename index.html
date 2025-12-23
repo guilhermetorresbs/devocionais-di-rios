@@ -1,0 +1,1740 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Devocionais Diários - App Espiritual</title>
+    <meta name="description" content="App de devocionais diários com versículo e mensagem do dia">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🙏</text></svg>">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --light-color: #ecf0f1;
+            --dark-color: #2c3e50;
+            --success-color: #2ecc71;
+            --friend-color: #9b59b6;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+            
+            /* Variáveis para tema claro (padrão) */
+            --bg-color: #f8f9fa;
+            --text-color: #333;
+            --card-bg: white;
+            --header-bg: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            --footer-bg: white;
+            --footer-color: #777;
+            --tab-bg: #f1f1f1;
+            --tab-color: #666;
+            --tab-active-bg: white;
+            --input-bg: white;
+            --input-border: #ddd;
+            --verse-bg: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+            --message-bg: linear-gradient(135deg, #fdfcfb, #f5f7fa);
+            --item-bg: white;
+            --item-border: #ddd;
+            --auth-bg: white;
+        }
+
+        /* Variáveis para tema escuro */
+        .dark-mode {
+            --bg-color: #121212;
+            --text-color: #e0e0e0;
+            --card-bg: #1e1e1e;
+            --header-bg: linear-gradient(135deg, #0d1b2a, #1b263b);
+            --footer-bg: #1a1a1a;
+            --footer-color: #aaa;
+            --tab-bg: #2d2d2d;
+            --tab-color: #bbb;
+            --tab-active-bg: #1e1e1e;
+            --input-bg: #2d2d2d;
+            --input-border: #444;
+            --verse-bg: linear-gradient(135deg, #2d3748, #4a5568);
+            --message-bg: linear-gradient(135deg, #2d2d2d, #3d3d3d);
+            --item-bg: #2d2d2d;
+            --item-border: #444;
+            --auth-bg: #2d2d2d;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            max-width: 100vw;
+            overflow-x: hidden;
+            transition: background-color 0.5s ease, color 0.5s ease;
+        }
+
+        .app-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: var(--card-bg);
+            min-height: 100vh;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
+            position: relative;
+            transition: background-color 0.5s ease;
+        }
+
+        /* Header */
+        header {
+            background: var(--header-bg);
+            color: white;
+            padding: 1rem 1.5rem;
+            text-align: center;
+            position: relative;
+            box-shadow: var(--shadow);
+            transition: background 0.5s ease;
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 5px 10px;
+            border-radius: 20px;
+        }
+
+        .user-avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: var(--secondary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .user-name {
+            font-size: 0.9rem;
+            max-width: 120px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo i {
+            font-size: 1.8rem;
+        }
+
+        .logo h1 {
+            font-size: 1.4rem;
+            font-weight: 600;
+        }
+
+        .date-display {
+            margin-top: 10px;
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        /* Botão de alternar tema */
+        .theme-toggle {
+            background-color: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+
+        .theme-toggle:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+            transform: rotate(30deg);
+        }
+
+        .theme-toggle i {
+            font-size: 1.2rem;
+        }
+
+        .auth-btn {
+            background-color: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: var(--transition);
+            white-space: nowrap;
+        }
+
+        .auth-btn:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .install-btn {
+            background-color: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .install-btn:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Navegação por abas */
+        .tabs {
+            display: flex;
+            background-color: var(--tab-bg);
+            border-bottom: 1px solid var(--input-border);
+            transition: background-color 0.5s ease;
+            overflow-x: auto;
+        }
+
+        .tab {
+            flex: 1;
+            min-width: 90px;
+            text-align: center;
+            padding: 15px 5px;
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 500;
+            color: var(--tab-color);
+            white-space: nowrap;
+        }
+
+        .tab.active {
+            background-color: var(--tab-active-bg);
+            color: var(--secondary-color);
+            border-bottom: 3px solid var(--secondary-color);
+        }
+
+        .tab.friends-tab.active {
+            color: var(--friend-color);
+            border-bottom-color: var(--friend-color);
+        }
+
+        /* Conteúdo das abas */
+        .tab-content {
+            display: none;
+            padding: 20px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Tela de autenticação */
+        .auth-container {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .auth-container.active {
+            display: flex;
+        }
+
+        .auth-box {
+            background-color: var(--auth-bg);
+            border-radius: 10px;
+            padding: 30px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: var(--shadow);
+            position: relative;
+            transition: background-color 0.5s ease;
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .auth-title {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        .auth-tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            overflow: hidden;
+            background-color: var(--tab-bg);
+        }
+
+        .auth-tab {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 500;
+        }
+
+        .auth-tab.active {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        .auth-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-color);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .auth-close:hover {
+            color: var(--accent-color);
+            transform: rotate(90deg);
+        }
+
+        /* Card de devocional */
+        .devotional-card {
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+            border-left: 4px solid var(--secondary-color);
+            transition: background-color 0.5s ease;
+        }
+
+        .shared-devotional {
+            border-left-color: var(--friend-color);
+        }
+
+        .devotional-author {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--input-border);
+        }
+
+        .author-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--friend-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+        }
+
+        .author-info h4 {
+            font-size: 1rem;
+            color: var(--text-color);
+            margin-bottom: 3px;
+        }
+
+        .author-info .date {
+            font-size: 0.8rem;
+            color: var(--footer-color);
+        }
+
+        .verse-of-day {
+            background: var(--verse-bg);
+            border-left-color: var(--secondary-color);
+        }
+
+        .message-of-day {
+            background: var(--message-bg);
+            border-left-color: var(--accent-color);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .card-date {
+            font-size: 0.85rem;
+            color: var(--footer-color);
+            background-color: rgba(0, 0, 0, 0.05);
+            padding: 3px 10px;
+            border-radius: 15px;
+        }
+
+        .dark-mode .card-date {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .verse-content {
+            font-size: 1.4rem;
+            font-style: italic;
+            color: var(--text-color);
+            margin: 15px 0;
+            text-align: center;
+            line-height: 1.8;
+        }
+
+        .verse-reference {
+            text-align: right;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-top: 10px;
+        }
+
+        .message-content {
+            font-size: 1.1rem;
+            line-height: 1.7;
+            color: var(--text-color);
+        }
+
+        /* Formulário de adicionar devocional */
+        .add-form {
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            margin-top: 20px;
+            transition: background-color 0.5s ease;
+        }
+
+        .form-title {
+            font-size: 1.3rem;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--input-border);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text-color);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid var(--input-border);
+            border-radius: 5px;
+            font-size: 1rem;
+            transition: var(--transition);
+            background-color: var(--input-bg);
+            color: var(--text-color);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+
+        textarea.form-control {
+            min-height: 150px;
+            resize: vertical;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+        }
+
+        .btn {
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+
+        .btn:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .btn-block {
+            width: 100%;
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+        }
+
+        .btn-success:hover {
+            background-color: #27ae60;
+        }
+
+        .btn-friend {
+            background-color: var(--friend-color);
+        }
+
+        .btn-friend:hover {
+            background-color: #8e44ad;
+        }
+
+        /* Lista de devocionais anteriores */
+        .devotional-list {
+            margin-top: 20px;
+        }
+
+        .devotional-item {
+            background-color: var(--item-bg);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            border-left: 3px solid var(--item-border);
+            transition: var(--transition);
+        }
+
+        .devotional-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .devotional-item-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .devotional-item-title {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .devotional-item-date {
+            font-size: 0.85rem;
+            color: var(--footer-color);
+        }
+
+        .devotional-item-content {
+            color: var(--text-color);
+            font-size: 0.95rem;
+        }
+
+        /* Lista de amigos */
+        .friends-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .friend-card {
+            background-color: var(--item-bg);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            border: 1px solid var(--input-border);
+        }
+
+        .friend-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .friend-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--friend-color);
+            margin: 0 auto 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+        }
+
+        .friend-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: var(--text-color);
+        }
+
+        .friend-email {
+            font-size: 0.8rem;
+            color: var(--footer-color);
+            margin-bottom: 10px;
+            word-break: break-all;
+        }
+
+        .friend-stats {
+            display: flex;
+            justify-content: space-around;
+            font-size: 0.8rem;
+            color: var(--text-color);
+            margin: 10px 0;
+        }
+
+        .friend-action {
+            margin-top: 10px;
+        }
+
+        /* Busca de amigos */
+        .search-friends {
+            margin-bottom: 20px;
+        }
+
+        .search-container {
+            display: flex;
+            gap: 10px;
+        }
+
+        /* Notificação */
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: var(--success-color);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 5px;
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 1000;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: transform 0.5s ease, opacity 0.5s ease;
+        }
+
+        .notification.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: var(--footer-color);
+            font-size: 0.9rem;
+            border-top: 1px solid var(--input-border);
+            margin-top: 30px;
+            background-color: var(--footer-bg);
+            transition: background-color 0.5s ease, color 0.5s ease;
+        }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .app-container {
+                box-shadow: none;
+            }
+            
+            .header-content {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .header-right {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .logo h1 {
+                font-size: 1.2rem;
+            }
+            
+            .verse-content {
+                font-size: 1.2rem;
+            }
+            
+            .friends-list {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+        }
+
+        @media (max-width: 480px) {
+            .tab {
+                padding: 12px 5px;
+                font-size: 0.9rem;
+                min-width: 80px;
+            }
+            
+            .tab-content {
+                padding: 15px;
+            }
+            
+            .devotional-card {
+                padding: 15px;
+            }
+            
+            .header-right {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .user-name {
+                max-width: 80px;
+            }
+            
+            .auth-box {
+                padding: 20px;
+            }
+        }
+
+        /* Estilos para PWA */
+        .pwa-install-prompt {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1001;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2);
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .pwa-install-prompt.show {
+            transform: translateY(0);
+        }
+
+        .pwa-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 30px;
+            color: var(--footer-color);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--footer-color);
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: var(--tab-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Cabeçalho -->
+        <header>
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-bible"></i>
+                    <h1>Devocionais Diários</h1>
+                </div>
+                <div class="header-right">
+                    <div class="user-info" id="userInfo" style="display: none;">
+                        <div class="user-avatar" id="userAvatar">U</div>
+                        <div class="user-name" id="userName">Usuário</div>
+                    </div>
+                    <button class="auth-btn" id="authButton">
+                        <i class="fas fa-user"></i> Entrar
+                    </button>
+                    <button class="theme-toggle" id="themeToggle" title="Alternar tema claro/escuro">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                    <button class="install-btn" id="installButton">
+                        <i class="fas fa-download"></i> Instalar
+                    </button>
+                </div>
+            </div>
+            <div class="date-display" id="currentDate">Carregando data...</div>
+        </header>
+
+        <!-- Navegação por abas -->
+        <div class="tabs">
+            <div class="tab active" data-tab="today">Hoje</div>
+            <div class="tab" data-tab="add">Adicionar</div>
+            <div class="tab" data-tab="friends">Amigos</div>
+            <div class="tab" data-tab="previous">Meus</div>
+        </div>
+
+        <!-- Conteúdo da aba "Hoje" -->
+        <div class="tab-content active" id="today-tab">
+            <div class="devotional-card verse-of-day">
+                <div class="card-header">
+                    <div class="card-title">Versículo do Dia</div>
+                    <div class="card-date" id="verseDate">23 de dezembro de 2025</div>
+                </div>
+                <div class="verse-content" id="verseContent">
+                    "Porque Deus tanto amou o mundo que deu o seu Filho Unigênito, para que todo o que nele crer não pereça, mas tenha a vida eterna."
+                </div>
+                <div class="verse-reference" id="verseReference">João 3:16</div>
+            </div>
+
+            <div class="devotional-card message-of-day">
+                <div class="card-header">
+                    <div class="card-title">Mensagem do Dia</div>
+                    <div class="card-date" id="messageDate">23 de dezembro de 2025</div>
+                </div>
+                <div class="message-content" id="messageContent">
+                    O amor de Deus é incondicional e eterno. Não importa o que tenhamos feito ou onde estamos na vida, Ele sempre está disposto a nos receber de volta. Sua graça é suficiente para cobrir todos os nossos erros e falhas. Hoje, lembre-se que você é amado por Deus de uma maneira que nenhum ser humano poderia amar. Permita que esse amor transforme sua vida e suas relações.
+                </div>
+            </div>
+
+            <!-- Devocionais compartilhados por amigos -->
+            <div id="sharedTodaySection" style="display: none;">
+                <h3 style="color: var(--friend-color); margin: 30px 0 15px; padding-bottom: 10px; border-bottom: 1px solid var(--input-border);">
+                    <i class="fas fa-users"></i> Devocionais dos Amigos
+                </h3>
+                <div id="sharedDevotionalsToday"></div>
+            </div>
+        </div>
+
+        <!-- Conteúdo da aba "Adicionar" -->
+        <div class="tab-content" id="add-tab">
+            <div class="add-form">
+                <h2 class="form-title">Adicionar Novo Devocional</h2>
+                <form id="devotionalForm">
+                    <div class="form-group">
+                        <label for="devotionalDate">Data do Devocional</label>
+                        <input type="date" id="devotionalDate" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="verse">Versículo</label>
+                        <textarea id="verse" class="form-control" placeholder="Digite o versículo bíblico aqui..." required></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="reference">Referência Bíblica</label>
+                        <input type="text" id="reference" class="form-control" placeholder="Ex: João 3:16" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="message">Mensagem/Reflexão</label>
+                        <textarea id="message" class="form-control" placeholder="Digite a mensagem ou reflexão do dia..." required></textarea>
+                    </div>
+                    
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="shareWithFriends" checked>
+                        <label for="shareWithFriends">Compartilhar com meus amigos</label>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-success btn-block">
+                        <i class="fas fa-save"></i> Salvar Devocional
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Conteúdo da aba "Amigos" -->
+        <div class="tab-content" id="friends-tab">
+            <h2 style="color: var(--friend-color); margin-bottom: 20px;">
+                <i class="fas fa-users"></i> Amigos
+            </h2>
+            
+            <div class="search-friends">
+                <div class="search-container">
+                    <input type="text" id="searchFriendInput" class="form-control" placeholder="Buscar amigos por email...">
+                    <button class="btn btn-friend" id="searchFriendBtn">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div id="searchResults" style="display: none; margin-bottom: 30px;">
+                <h3>Resultados da Busca</h3>
+                <div id="searchResultsList"></div>
+            </div>
+            
+            <h3 style="margin: 20px 0 15px; color: var(--text-color);">Meus Amigos</h3>
+            <div class="friends-list" id="friendsList">
+                <!-- Lista de amigos será carregada aqui -->
+            </div>
+            
+            <div id="noFriendsMessage" class="empty-state" style="display: none;">
+                <i class="fas fa-user-friends"></i>
+                <h3>Você ainda não tem amigos</h3>
+                <p>Adicione amigos para ver os devocionais deles!</p>
+            </div>
+            
+            <h3 style="margin: 30px 0 15px; color: var(--text-color);">Devocionais dos Amigos</h3>
+            <div id="friendsDevotionals">
+                <!-- Devocionais dos amigos serão carregados aqui -->
+            </div>
+        </div>
+
+        <!-- Conteúdo da aba "Meus" -->
+        <div class="tab-content" id="previous-tab">
+            <h2 style="color: var(--primary-color); margin-bottom: 20px;">Meus Devocionais</h2>
+            <div class="devotional-list" id="devotionalList">
+                <!-- Os devocionais serão carregados aqui via JavaScript -->
+            </div>
+        </div>
+
+        <!-- Rodapé -->
+        <footer>
+            <p>Devocionais Diários &copy; <span id="currentYear">2025</span> - Compartilhando fé com amigos</p>
+            <p style="font-size: 0.8rem; margin-top: 5px;">Instale este aplicativo no seu celular para acesso offline</p>
+        </footer>
+
+        <!-- Tela de Autenticação -->
+        <div class="auth-container" id="authContainer">
+            <div class="auth-box">
+                <button class="auth-close" id="authClose">&times;</button>
+                <div class="auth-header">
+                    <h2 class="auth-title">Devocionais Diários</h2>
+                    <p>Entre ou cadastre-se para compartilhar com amigos</p>
+                </div>
+                
+                <div class="auth-tabs">
+                    <div class="auth-tab active" id="loginTab">Entrar</div>
+                    <div class="auth-tab" id="registerTab">Cadastrar</div>
+                </div>
+                
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="loginEmail">Email</label>
+                        <input type="email" id="loginEmail" class="form-control" placeholder="seu@email.com" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="loginPassword">Senha</label>
+                        <input type="password" id="loginPassword" class="form-control" placeholder="Sua senha" required minlength="6">
+                    </div>
+                    
+                    <button type="submit" class="btn btn-block">
+                        <i class="fas fa-sign-in-alt"></i> Entrar
+                    </button>
+                </form>
+                
+                <form id="registerForm" style="display: none;">
+                    <div class="form-group">
+                        <label for="registerName">Nome</label>
+                        <input type="text" id="registerName" class="form-control" placeholder="Seu nome" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="registerEmail">Email</label>
+                        <input type="email" id="registerEmail" class="form-control" placeholder="seu@email.com" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="registerPassword">Senha</label>
+                        <input type="password" id="registerPassword" class="form-control" placeholder="Mínimo 6 caracteres" required minlength="6">
+                    </div>
+                    
+                    <button type="submit" class="btn btn-success btn-block">
+                        <i class="fas fa-user-plus"></i> Cadastrar
+                    </button>
+                </form>
+                
+                <div style="text-align: center; margin-top: 20px; font-size: 0.9rem; color: var(--footer-color);">
+                    <p>Seus dados estão seguros. Usamos Firebase Authentication.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Prompt de instalação PWA -->
+        <div class="pwa-install-prompt" id="pwaInstallPrompt">
+            <div>
+                <strong>Instalar App Devocionais</strong>
+                <p>Tenha acesso rápido aos devocionais diários!</p>
+            </div>
+            <div>
+                <button class="btn" id="pwaInstallConfirm">Instalar</button>
+                <button class="pwa-close" id="pwaInstallClose">&times;</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notificação -->
+    <div class="notification" id="notification">
+        <i class="fas fa-check-circle"></i>
+        <span id="notificationText">Devocional salvo com sucesso!</span>
+    </div>
+
+    <script>
+        // ==============================================
+        // CONFIGURAÇÃO DO FIREBASE (ATUALIZADA)
+        // ==============================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyD8A9Ja4LOJjIWKrK6Y6NQSsuR3oV3oOuU",
+            authDomain: "devocionais-diarios-be6cb.firebaseapp.com",
+            databaseURL: "https://devocionais-diarios-be6cb-default-rtdb.firebaseio.com",  // ADICIONEI ESTA LINHA
+            projectId: "devocionais-diarios-be6cb",
+            storageBucket: "devocionais-diarios-be6cb.firebasestorage.app",
+            messagingSenderId: "741330351422",
+            appId: "1:741330351422:web:57c26d4a88605415ac286f"
+        };
+    
+        // Inicializar Firebase (versão compat - a que você já está usando)
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const database = firebase.database();
+    
+        // ==============================================
+        // VARIÁVEIS GLOBAIS
+        // ==============================================
+        let currentUser = null;
+        let devotionalsData = {
+            "devotionals": []
+        };
+    
+        // ==============================================
+        // ELEMENTOS DOM
+        // ==============================================
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const currentDateElement = document.getElementById('currentDate');
+        const verseContentElement = document.getElementById('verseContent');
+        const verseReferenceElement = document.getElementById('verseReference');
+        const messageContentElement = document.getElementById('messageContent');
+        const devotionalForm = document.getElementById('devotionalForm');
+        const devotionalList = document.getElementById('devotionalList');
+        const notification = document.getElementById('notification');
+        const notificationText = document.getElementById('notificationText');
+        const installButton = document.getElementById('installButton');
+        const pwaInstallPrompt = document.getElementById('pwaInstallPrompt');
+        const pwaInstallConfirm = document.getElementById('pwaInstallConfirm');
+        const pwaInstallClose = document.getElementById('pwaInstallClose');
+        const themeToggle = document.getElementById('themeToggle');
+        const themeIcon = themeToggle.querySelector('i');
+        const authButton = document.getElementById('authButton');
+        const authContainer = document.getElementById('authContainer');
+        const authClose = document.getElementById('authClose');
+        const loginTab = document.getElementById('loginTab');
+        const registerTab = document.getElementById('registerTab');
+        const loginForm = document.getElementById('loginForm');
+        const registerForm = document.getElementById('registerForm');
+        const userInfo = document.getElementById('userInfo');
+        const userAvatar = document.getElementById('userAvatar');
+        const userName = document.getElementById('userName');
+        const searchFriendBtn = document.getElementById('searchFriendBtn');
+        const searchFriendInput = document.getElementById('searchFriendInput');
+        
+        // Variável para controlar o prompt de instalação PWA
+        let deferredPrompt;
+    
+        // ==============================================
+        // FUNÇÕES UTILITÁRIAS
+        // ==============================================
+        
+        // Formatador de data
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const options = { day: 'numeric', month: 'long', year: 'numeric' };
+            return date.toLocaleDateString('pt-BR', options);
+        }
+    
+        // Mostrar notificação
+        function showNotification(message) {
+            notificationText.textContent = message;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+    
+        // Alternar entre abas
+        function switchTab(tabName) {
+            tabs.forEach(t => t.classList.remove('active'));
+            tabContents.forEach(content => content.classList.remove('active'));
+            
+            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+        }
+    
+        // ==============================================
+        // TEMA (CLARO/ESCURO)
+        // ==============================================
+        
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            
+            if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+                enableDarkMode();
+            } else {
+                enableLightMode();
+            }
+        }
+    
+        function enableDarkMode() {
+            document.body.classList.add('dark-mode');
+            themeIcon.classList.remove('fa-moon');
+            themeIcon.classList.add('fa-sun');
+            localStorage.setItem('theme', 'dark');
+        }
+    
+        function enableLightMode() {
+            document.body.classList.remove('dark-mode');
+            themeIcon.classList.remove('fa-sun');
+            themeIcon.classList.add('fa-moon');
+            localStorage.setItem('theme', 'light');
+        }
+    
+        themeToggle.addEventListener('click', () => {
+            if (document.body.classList.contains('dark-mode')) {
+                enableLightMode();
+            } else {
+                enableDarkMode();
+            }
+        });
+    
+        // ==============================================
+        // FUNÇÕES DE AUTENTICAÇÃO
+        // ==============================================
+        
+        function showAuthScreen() {
+            authContainer.classList.add('active');
+        }
+    
+        function hideAuthScreen() {
+            authContainer.classList.remove('active');
+            loginForm.reset();
+            registerForm.reset();
+            // Voltar para login
+            loginTab.classList.add('active');
+            registerTab.classList.remove('active');
+            loginForm.style.display = 'block';
+            registerForm.style.display = 'none';
+        }
+    
+        // Cadastro de novo usuário
+        registerForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('registerName').value;
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+            
+            auth.createUserWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    const user = userCredential.user;
+                    
+                    // Atualizar nome do usuário
+                    return user.updateProfile({
+                        displayName: name
+                    }).then(() => {
+                        // Salvar informações adicionais no banco de dados
+                        return database.ref('users/' + user.uid).set({
+                            name: name,
+                            email: email,
+                            createdAt: firebase.database.ServerValue.TIMESTAMP
+                        });
+                    });
+                })
+                .then(() => {
+                    showNotification('Cadastro realizado com sucesso!');
+                    hideAuthScreen();
+                })
+                .catch((error) => {
+                    showNotification('Erro no cadastro: ' + error.message);
+                });
+        });
+    
+        // Login de usuário
+        loginForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            auth.signInWithEmailAndPassword(email, password)
+                .then(() => {
+                    showNotification('Login realizado com sucesso!');
+                    hideAuthScreen();
+                })
+                .catch((error) => {
+                    showNotification('Erro no login: ' + error.message);
+                });
+        });
+    
+        // Observar estado de autenticação
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                currentUser = user;
+                updateUIForLoggedInUser();
+                loadUserDevotionals();
+                loadFriendsDevotionals();
+                loadFriendsList();
+            } else {
+                currentUser = null;
+                updateUIForLoggedOutUser();
+            }
+        });
+    
+        // Atualizar UI para usuário logado
+        function updateUIForLoggedInUser() {
+            authButton.innerHTML = '<i class="fas fa-sign-out-alt"></i> Sair';
+            authButton.onclick = () => {
+                auth.signOut();
+                showNotification('Desconectado com sucesso!');
+            };
+            
+            userInfo.style.display = 'flex';
+            const displayName = currentUser.displayName || currentUser.email.split('@')[0];
+            userName.textContent = displayName;
+            userAvatar.textContent = displayName[0].toUpperCase();
+            
+            // Mostrar abas que precisam de login
+            document.querySelector('[data-tab="add"]').style.display = 'block';
+            document.querySelector('[data-tab="friends"]').style.display = 'block';
+            document.querySelector('[data-tab="previous"]').style.display = 'block';
+        }
+    
+        // Atualizar UI para usuário não logado
+        function updateUIForLoggedOutUser() {
+            authButton.innerHTML = '<i class="fas fa-user"></i> Entrar';
+            authButton.onclick = showAuthScreen;
+            
+            userInfo.style.display = 'none';
+            
+            // Esconder abas que precisam de login
+            document.querySelector('[data-tab="add"]').style.display = 'none';
+            document.querySelector('[data-tab="friends"]').style.display = 'none';
+            document.querySelector('[data-tab="previous"]').style.display = 'none';
+            
+            // Se estiver em uma aba que precisa de login, voltar para "Hoje"
+            const activeTab = document.querySelector('.tab.active');
+            if (activeTab && ['add', 'friends', 'previous'].includes(activeTab.dataset.tab)) {
+                switchTab('today');
+            }
+        }
+    
+        // ==============================================
+        // FUNÇÕES DO BANCO DE DADOS
+        // ==============================================
+    
+        // Salvar devocional no Firebase
+        function saveDevotionalToFirebase(date, verse, reference, message, shareWithFriends) {
+            if (!currentUser) {
+                showNotification('Você precisa estar logado para adicionar devocionais');
+                showAuthScreen();
+                return;
+            }
+            
+            const devotionalData = {
+                userId: currentUser.uid,
+                userName: currentUser.displayName || currentUser.email.split('@')[0],
+                date: date,
+                verse: verse,
+                reference: reference,
+                message: message,
+                shared: shareWithFriends,
+                createdAt: firebase.database.ServerValue.TIMESTAMP
+            };
+            
+            // Salvar no Firebase
+            const newDevotionalRef = database.ref('devotionals').push();
+            newDevotionalRef.set(devotionalData)
+                .then(() => {
+                    showNotification('Devocional salvo com sucesso!');
+                    loadUserDevotionals();
+                    loadFriendsDevotionals();
+                })
+                .catch((error) => {
+                    showNotification('Erro ao salvar: ' + error.message);
+                });
+        }
+    
+        // Carregar devocionais do usuário
+        function loadUserDevotionals() {
+            if (!currentUser) return;
+            
+            database.ref('devotionals')
+                .orderByChild('userId')
+                .equalTo(currentUser.uid)
+                .once('value')
+                .then((snapshot) => {
+                    const devotionals = [];
+                    snapshot.forEach((childSnapshot) => {
+                        const devotional = childSnapshot.val();
+                        devotional.id = childSnapshot.key;
+                        devotionals.push(devotional);
+                    });
+                    
+                    // Ordenar por data (mais recente primeiro)
+                    devotionals.sort((a, b) => new Date(b.date) - new Date(a.date));
+                    displayUserDevotionals(devotionals);
+                });
+        }
+    
+        // Carregar devocionais dos amigos
+        function loadFriendsDevotionals() {
+            if (!currentUser) return;
+            
+            database.ref('devotionals')
+                .orderByChild('shared')
+                .equalTo(true)
+                .once('value')
+                .then((snapshot) => {
+                    const devotionals = [];
+                    snapshot.forEach((childSnapshot) => {
+                        const devotional = childSnapshot.val();
+                        devotional.id = childSnapshot.key;
+                        
+                        // Não mostrar os próprios devocionais
+                        if (devotional.userId !== currentUser.uid) {
+                            devotionals.push(devotional);
+                        }
+                    });
+                    
+                    // Ordenar por data (mais recente primeiro)
+                    devotionals.sort((a, b) => new Date(b.date) - new Date(a.date));
+                    displayFriendsDevotionals(devotionals);
+                });
+        }
+    
+        // Carregar lista de amigos
+        function loadFriendsList() {
+            if (!currentUser) return;
+            
+            database.ref('friendships/' + currentUser.uid).once('value')
+                .then((snapshot) => {
+                    const friends = [];
+                    snapshot.forEach((childSnapshot) => {
+                        friends.push(childSnapshot.key);
+                    });
+                    
+                    if (friends.length > 0) {
+                        loadFriendsInfo(friends);
+                    } else {
+                        showNoFriendsMessage();
+                    }
+                });
+        }
+    
+        // Buscar usuário por email
+        function searchUserByEmail(email) {
+            database.ref('users').orderByChild('email').equalTo(email).once('value')
+                .then((snapshot) => {
+                    const results = [];
+                    snapshot.forEach((childSnapshot) => {
+                        const user = childSnapshot.val();
+                        user.id = childSnapshot.key;
+                        // Não mostrar o próprio usuário
+                        if (user.id !== currentUser.uid) {
+                            results.push(user);
+                        }
+                    });
+                    
+                    displaySearchResults(results);
+                });
+        }
+    
+        // Adicionar amigo
+        function addFriend(friendId) {
+            if (!currentUser) return;
+            
+            database.ref('friendships/' + currentUser.uid + '/' + friendId).set(true)
+                .then(() => {
+                    showNotification('Amigo adicionado com sucesso!');
+                    loadFriendsList();
+                })
+                .catch((error) => {
+                    showNotification('Erro ao adicionar amigo: ' + error.message);
+                });
+        }
+    
+        // ==============================================
+        // FUNÇÕES DE EXIBIÇÃO
+        // ==============================================
+    
+        // Exibir devocionais do usuário
+        function displayUserDevotionals(devotionals) {
+            const container = document.getElementById('devotionalList');
+            
+            if (devotionals.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-book-bible"></i>
+                        <h3>Nenhum devocional encontrado</h3>
+                        <p>Adicione seu primeiro devocional na aba "Adicionar"</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = '';
+            devotionals.forEach(devotional => {
+                const devotionalItem = document.createElement('div');
+                devotionalItem.className = 'devotional-item';
+                devotionalItem.innerHTML = `
+                    <div class="devotional-item-header">
+                        <div class="devotional-item-title">${devotional.reference}</div>
+                        <div class="devotional-item-date">${formatDate(devotional.date)}</div>
+                    </div>
+                    <div class="devotional-item-content">
+                        <p><strong>Versículo:</strong> ${devotional.verse.substring(0, 100)}${devotional.verse.length > 100 ? '...' : ''}</p>
+                        <p><strong>Mensagem:</strong> ${devotional.message.substring(0, 150)}${devotional.message.length > 150 ? '...' : ''}</p>
+                    </div>
+                `;
+                
+                container.appendChild(devotionalItem);
+            });
+        }
+    
+        // Exibir devocionais dos amigos
+        function displayFriendsDevotionals(devotionals) {
+            const container = document.getElementById('friendsDevotionals');
+            const todayContainer = document.getElementById('sharedDevotionalsToday');
+            
+            if (devotionals.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-users"></i>
+                        <h3>Nenhum devocional compartilhado</h3>
+                        <p>Seus amigos ainda não compartilharam devocionais</p>
+                    </div>
+                `;
+                document.getElementById('sharedTodaySection').style.display = 'none';
+                return;
+            }
+            
+            // Filtrar devocionais de hoje
+            const today = new Date().toISOString().split('T')[0];
+            const todayDevotionals = devotionals.filter(d => d.date === today);
+            
+            // Exibir devocionais de hoje na aba "Hoje"
+            if (todayDevotionals.length > 0) {
+                document.getElementById('sharedTodaySection').style.display = 'block';
+                todayContainer.innerHTML = '';
+                
+                todayDevotionals.forEach(devotional => {
+                    todayContainer.innerHTML += createDevotionalCardHTML(devotional);
+                });
+            } else {
+                document.getElementById('sharedTodaySection').style.display = 'none';
+            }
+            
+            // Exibir todos os devocionais na aba "Amigos"
+            container.innerHTML = '';
+            devotionals.forEach(devotional => {
+                container.innerHTML += createDevotionalCardHTML(devotional);
+            });
+        }
+    
+        // Criar HTML do card de devocional
+        function createDevotionalCardHTML(devotional) {
+            return `
+                <div class="devotional-card shared-devotional">
+                    <div class="devotional-author">
+                        <div class="author-avatar">${devotional.userName ? devotional.userName[0].toUpperCase() : 'A'}</div>
+                        <div class="author-info">
+                            <h4>${devotional.userName || 'Amigo'}</h4>
+                            <div class="date">${formatDate(devotional.date)}</div>
+                        </div>
+                    </div>
+                    <div class="verse-content">${devotional.verse}</div>
+                    <div class="verse-reference">${devotional.reference}</div>
+                    <div class="message-content">${devotional.message}</div>
+                </div>
+            `;
+        }
+    
+        // Exibir resultados da busca
+        function displaySearchResults(results) {
+            const container = document.getElementById('searchResults');
+            const list = document.getElementById('searchResultsList');
+            
+            if (results.length === 0) {
+                list.innerHTML = '<p>Nenhum usuário encontrado com este email</p>';
+                container.style.display = 'block';
+                return;
+            }
+            
+            list.innerHTML = '';
+            results.forEach(user => {
+                list.innerHTML += `
+                    <div class="friend-card">
+                        <div class="friend-avatar">${user.name ? user.name[0].toUpperCase() : user.email[0].toUpperCase()}</div>
+                        <div class="friend-name">${user.name || 'Usuário'}</div>
+                        <div class="friend-email">${user.email}</div>
+                        <div class="friend-action">
+                            <button class="btn btn-friend" onclick="addFriend('${user.id}')">
+                                <i class="fas fa-user-plus"></i> Adicionar Amigo
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.style.display = 'block';
+        }
+    
+        // Exibir mensagem de "sem amigos"
+        function showNoFriendsMessage() {
+            document.getElementById('noFriendsMessage').style.display = 'block';
+            document.getElementById('friendsList').innerHTML = '';
+        }
+    
+        // Carregar informações dos amigos
+        function loadFriendsInfo(friendIds) {
+            document.getElementById('noFriendsMessage').style.display = 'none';
+            const container = document.getElementById('friendsList');
+            container.innerHTML = '';
+            
+            friendIds.forEach(friendId => {
+                database.ref('users/' + friendId).once('value')
+                    .then((snapshot) => {
+                        const user = snapshot.val();
+                        if (user) {
+                            const friendCard = document.createElement('div');
+                            friendCard.className = 'friend-card';
+                            friendCard.innerHTML = `
+                                <div class="friend-avatar">${user.name ? user.name[0].toUpperCase() : user.email[0].toUpperCase()}</div>
+                                <div class="friend-name">${user.name || 'Usuário'}</div>
+                                <div class="friend-email">${user.email}</div>
+                            `;
+                            container.appendChild(friendCard);
+                        }
+                    });
+            });
+        }
+    
+        // ==============================================
+        // INICIALIZAÇÃO
+        // ==============================================
+    
+        function init() {
+            // Configurar tema
+            initTheme();
+            
+            // Configurar data atual
+            const today = new Date();
+            currentDateElement.textContent = formatDate(today.toISOString().split('T')[0]);
+            
+            // Definir data padrão no formulário como hoje
+            document.getElementById('devotionalDate').valueAsDate = today;
+            
+            // Configurar ano atual no rodapé
+            document.getElementById('currentYear').textContent = today.getFullYear();
+            
+            // Carregar dados locais (para não-logados)
+            loadLocalDevotionals();
+        }
+    
+        // Carregar dados locais (sem login)
+        function loadLocalDevotionals() {
+            const savedDevotionals = localStorage.getItem('devotionalsData');
+            if (savedDevotionals) {
+                devotionalsData = JSON.parse(savedDevotionals);
+                devotionalsData.devotionals.sort((a, b) => new Date(b.date) - new Date(a.date));
+                
+                if (devotionalsData.devotionals.length > 0) {
+                    const todayDevotional = devotionalsData.devotionals[0];
+                    verseContentElement.textContent = todayDevotional.verse;
+                    verseReferenceElement.textContent = todayDevotional.reference;
+                    document.getElementById('verseDate').textContent = formatDate(todayDevotional.date);
+                    
+                    messageContentElement.textContent = todayDevotional.message;
+                    document.getElementById('messageDate').textContent = formatDate(todayDevotional.date);
+                }
+            }
+        }
+    
+        // ==============================================
+        // EVENT LISTENERS
+        // ==============================================
+    
+        // Navegação por abas
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabId = tab.getAttribute('data-tab');
+                switchTab(tabId);
+            });
+        });
+    
+        // Envio do formulário de devocional
+        devotionalForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const date = document.getElementById('devotionalDate').value;
+            const verse = document.getElementById('verse').value;
+            const reference = document.getElementById('reference').value;
+            const message = document.getElementById('message').value;
+            const shareWithFriends = document.getElementById('shareWithFriends').checked;
+            
+            // Salvar no Firebase
+            saveDevotionalToFirebase(date, verse, reference, message, shareWithFriends);
+            
+            // Limpar formulário
+            this.reset();
+            document.getElementById('devotionalDate').valueAsDate = new Date();
+            
+            // Voltar para aba "Hoje"
+            switchTab('today');
+        });
+    
+        // Buscar amigos
+        searchFriendBtn.addEventListener('click', function() {
+            const email = searchFriendInput.value;
+            if (email) {
+                searchUserByEmail(email);
+            }
+        });
+    
+        // Alternar entre login e cadastro
+        loginTab.addEventListener('click', function() {
+            loginTab.classList.add('active');
+            registerTab.classList.remove('active');
+            loginForm.style.display = 'block';
+            registerForm.style.display = 'none';
+        });
+    
+        registerTab.addEventListener('click', function() {
+            registerTab.classList.add('active');
+            loginTab.classList.remove('active');
+            registerForm.style.display = 'block';
+            loginForm.style.display = 'none';
+        });
+    
+        // Fechar tela de autenticação
+        authClose.addEventListener('click', hideAuthScreen);
+    
+        // PWA - Instalação
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            installButton.style.display = 'block';
+            
+            setTimeout(() => {
+                pwaInstallPrompt.classList.add('show');
+            }, 3000);
+        });
+    
+        installButton.addEventListener('click', async () => {
+            if (!deferredPrompt) return;
+            
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            
+            if (outcome === 'accepted') {
+                showNotification('Aplicativo instalado com sucesso!');
+                installButton.style.display = 'none';
+                pwaInstallPrompt.classList.remove('show');
+            }
+            
+            deferredPrompt = null;
+        });
+    
+        pwaInstallConfirm.addEventListener('click', async () => {
+            if (!deferredPrompt) return;
+            
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            
+            if (outcome === 'accepted') {
+                showNotification('Aplicativo instalado com sucesso!');
+                installButton.style.display = 'none';
+            }
+            
+            pwaInstallPrompt.classList.remove('show');
+            deferredPrompt = null;
+        });
+    
+        pwaInstallClose.addEventListener('click', () => {
+            pwaInstallPrompt.classList.remove('show');
+        });
+    
+        window.addEventListener('appinstalled', () => {
+            installButton.style.display = 'none';
+            pwaInstallPrompt.classList.remove('show');
+            deferredPrompt = null;
+        });
+    
+        // Inicializar o aplicativo
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+    </body>
+    </html>
