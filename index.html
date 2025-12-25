@@ -11,6 +11,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js"></script>
     
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🙏</text></svg>">
@@ -30,6 +31,7 @@
             --dark-color: #2c3e50;
             --success-color: #2ecc71;
             --friend-color: #9b59b6;
+            --like-color: #e74c3c;
             --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             --transition: all 0.3s ease;
             
@@ -50,6 +52,7 @@
             --item-bg: white;
             --item-border: #ddd;
             --auth-bg: white;
+            --comment-bg: #f8f9fa;
         }
 
         /* Variáveis para tema escuro */
@@ -70,6 +73,7 @@
             --item-bg: #2d2d2d;
             --item-border: #444;
             --auth-bg: #2d2d2d;
+            --comment-bg: #2d2d2d;
         }
 
         body {
@@ -206,18 +210,34 @@
             background-color: rgba(255, 255, 255, 0.3);
         }
 
-        .install-btn {
+        /* Botão de notificações */
+        .notifications-toggle {
             background-color: rgba(255, 255, 255, 0.2);
             border: 1px solid rgba(255, 255, 255, 0.3);
             color: white;
-            padding: 8px 15px;
-            border-radius: 30px;
-            font-size: 0.85rem;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
             cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             transition: var(--transition);
+            position: relative;
         }
 
-        .install-btn:hover {
+        .notifications-toggle.has-notifications::after {
+            content: '';
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            width: 8px;
+            height: 8px;
+            background-color: var(--accent-color);
+            border-radius: 50%;
+        }
+
+        .notifications-toggle:hover {
             background-color: rgba(255, 255, 255, 0.3);
         }
 
@@ -251,6 +271,11 @@
         .tab.friends-tab.active {
             color: var(--friend-color);
             border-bottom-color: var(--friend-color);
+        }
+
+        .tab.browse-tab.active {
+            color: var(--success-color);
+            border-bottom-color: var(--success-color);
         }
 
         /* Conteúdo das abas */
@@ -357,10 +382,15 @@
             box-shadow: var(--shadow);
             border-left: 4px solid var(--secondary-color);
             transition: background-color 0.5s ease;
+            position: relative;
         }
 
         .shared-devotional {
             border-left-color: var(--friend-color);
+        }
+
+        .my-devotional {
+            border-left-color: var(--success-color);
         }
 
         .devotional-author {
@@ -382,6 +412,10 @@
             justify-content: center;
             font-weight: bold;
             color: white;
+        }
+
+        .my-avatar {
+            background: var(--success-color);
         }
 
         .author-info h4 {
@@ -450,9 +484,140 @@
             font-size: 1.1rem;
             line-height: 1.7;
             color: var(--text-color);
+            margin-bottom: 20px;
         }
 
-        /* Formulário de adicionar devocional */
+        /* Interações do devocional */
+        .devotional-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid var(--input-border);
+        }
+
+        .action-left {
+            display: flex;
+            gap: 15px;
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.9rem;
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+
+        .action-btn:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+
+        .dark-mode .action-btn:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .like-btn.liked {
+            color: var(--like-color);
+        }
+
+        .like-btn.liked i {
+            color: var(--like-color);
+        }
+
+        .like-count, .comment-count {
+            font-size: 0.8rem;
+        }
+
+        .edit-btn {
+            color: var(--secondary-color);
+        }
+
+        .delete-btn {
+            color: var(--accent-color);
+        }
+
+        /* Seção de comentários */
+        .comments-section {
+            margin-top: 20px;
+            display: none;
+        }
+
+        .comments-section.expanded {
+            display: block;
+        }
+
+        .comments-title {
+            font-size: 1rem;
+            color: var(--text-color);
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--input-border);
+        }
+
+        .comments-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+        }
+
+        .comment-item {
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: var(--comment-bg);
+            border-radius: 5px;
+            border-left: 3px solid var(--secondary-color);
+        }
+
+        .comment-author {
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+
+        .comment-content {
+            font-size: 0.9rem;
+            color: var(--text-color);
+        }
+
+        .comment-date {
+            font-size: 0.7rem;
+            color: var(--footer-color);
+            text-align: right;
+            margin-top: 5px;
+        }
+
+        .add-comment-form {
+            display: flex;
+            gap: 10px;
+        }
+
+        .comment-input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid var(--input-border);
+            border-radius: 5px;
+            background-color: var(--input-bg);
+            color: var(--text-color);
+        }
+
+        .comment-submit {
+            padding: 10px 15px;
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        /* Formulário de adicionar/devocional */
         .add-form {
             background-color: var(--card-bg);
             border-radius: 10px;
@@ -552,8 +717,35 @@
             background-color: #8e44ad;
         }
 
-        /* Lista de devocionais anteriores */
-        .devotional-list {
+        .btn-edit {
+            background-color: #f39c12;
+        }
+
+        .btn-edit:hover {
+            background-color: #d68910;
+        }
+
+        /* Lista de devocionais (navegar) */
+        .browse-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .filter-select {
+            padding: 10px;
+            border: 1px solid var(--input-border);
+            border-radius: 5px;
+            background-color: var(--input-bg);
+            color: var(--text-color);
+            min-width: 150px;
+        }
+
+        .devotional-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
             margin-top: 20px;
         }
 
@@ -561,10 +753,10 @@
             background-color: var(--item-bg);
             border-radius: 8px;
             padding: 15px;
-            margin-bottom: 15px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
             border-left: 3px solid var(--item-border);
             transition: var(--transition);
+            cursor: pointer;
         }
 
         .devotional-item:hover {
@@ -593,76 +785,45 @@
             font-size: 0.95rem;
         }
 
-        /* Lista de amigos */
-        .friends-list {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        .friend-card {
-            background-color: var(--item-bg);
-            border-radius: 10px;
-            padding: 15px;
-            text-align: center;
-            box-shadow: var(--shadow);
-            transition: var(--transition);
-            border: 1px solid var(--input-border);
-        }
-
-        .friend-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-        }
-
-        .friend-avatar {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            background: var(--friend-color);
-            margin: 0 auto 10px;
-            display: flex;
+        /* Modal de visualização completa */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 3000;
             align-items: center;
             justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            padding: 30px;
+            width: 100%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
             font-size: 1.5rem;
-            font-weight: bold;
-            color: white;
-        }
-
-        .friend-name {
-            font-weight: 600;
-            margin-bottom: 5px;
             color: var(--text-color);
-        }
-
-        .friend-email {
-            font-size: 0.8rem;
-            color: var(--footer-color);
-            margin-bottom: 10px;
-            word-break: break-all;
-        }
-
-        .friend-stats {
-            display: flex;
-            justify-content: space-around;
-            font-size: 0.8rem;
-            color: var(--text-color);
-            margin: 10px 0;
-        }
-
-        .friend-action {
-            margin-top: 10px;
-        }
-
-        /* Busca de amigos */
-        .search-friends {
-            margin-bottom: 20px;
-        }
-
-        .search-container {
-            display: flex;
-            gap: 10px;
+            cursor: pointer;
         }
 
         /* Notificação */
@@ -687,6 +848,14 @@
         .notification.show {
             transform: translateY(0);
             opacity: 1;
+        }
+
+        .notification.error {
+            background-color: var(--accent-color);
+        }
+
+        .notification.info {
+            background-color: var(--secondary-color);
         }
 
         /* Footer */
@@ -725,8 +894,12 @@
                 font-size: 1.2rem;
             }
             
-            .friends-list {
-                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            .devotional-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .add-comment-form {
+                flex-direction: column;
             }
         }
 
@@ -734,7 +907,7 @@
             .tab {
                 padding: 12px 5px;
                 font-size: 0.9rem;
-                min-width: 80px;
+                min-width: 70px;
             }
             
             .tab-content {
@@ -758,55 +931,6 @@
                 padding: 20px;
             }
         }
-
-        /* Estilos para PWA */
-        .pwa-install-prompt {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background-color: var(--primary-color);
-            color: white;
-            padding: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            z-index: 1001;
-            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2);
-            transform: translateY(100%);
-            transition: transform 0.3s ease;
-        }
-
-        .pwa-install-prompt.show {
-            transform: translateY(0);
-        }
-
-        .pwa-close {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 1.5rem;
-            cursor: pointer;
-        }
-
-        /* Loading */
-        .loading {
-            text-align: center;
-            padding: 30px;
-            color: var(--footer-color);
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 40px 20px;
-            color: var(--footer-color);
-        }
-
-        .empty-state i {
-            font-size: 3rem;
-            margin-bottom: 15px;
-            color: var(--tab-color);
-        }
     </style>
 </head>
 <body>
@@ -823,14 +947,14 @@
                         <div class="user-avatar" id="userAvatar">U</div>
                         <div class="user-name" id="userName">Usuário</div>
                     </div>
+                    <button class="notifications-toggle" id="notificationsToggle" title="Notificações">
+                        <i class="fas fa-bell"></i>
+                    </button>
                     <button class="auth-btn" id="authButton">
                         <i class="fas fa-user"></i> Entrar
                     </button>
                     <button class="theme-toggle" id="themeToggle" title="Alternar tema claro/escuro">
                         <i class="fas fa-moon"></i>
-                    </button>
-                    <button class="install-btn" id="installButton">
-                        <i class="fas fa-download"></i> Instalar
                     </button>
                 </div>
             </div>
@@ -841,6 +965,7 @@
         <div class="tabs">
             <div class="tab active" data-tab="today">Hoje</div>
             <div class="tab" data-tab="add">Adicionar</div>
+            <div class="tab" data-tab="browse">Navegar</div>
             <div class="tab" data-tab="friends">Amigos</div>
             <div class="tab" data-tab="previous">Meus</div>
         </div>
@@ -850,7 +975,7 @@
             <div class="devotional-card verse-of-day">
                 <div class="card-header">
                     <div class="card-title">Versículo do Dia</div>
-                    <div class="card-date" id="verseDate">21 de dezembro de 2025</div>
+                    <div class="card-date" id="verseDate">23 de dezembro de 2025</div>
                 </div>
                 <div class="verse-content" id="verseContent">
                     "Porque Deus tanto amou o mundo que deu o seu Filho Unigênito, para que todo o que nele crer não pereça, mas tenha a vida eterna."
@@ -861,7 +986,7 @@
             <div class="devotional-card message-of-day">
                 <div class="card-header">
                     <div class="card-title">Mensagem do Dia</div>
-                    <div class="card-date" id="messageDate">21 de dezembro de 2025</div>
+                    <div class="card-date" id="messageDate">23 de dezembro de 2025</div>
                 </div>
                 <div class="message-content" id="messageContent">
                     O amor de Deus é incondicional e eterno. Não importa o que tenhamos feito ou onde estamos na vida, Ele sempre está disposto a nos receber de volta. Sua graça é suficiente para cobrir todos os nossos erros e falhas. Hoje, lembre-se que você é amado por Deus de uma maneira que nenhum ser humano poderia amar. Permita que esse amor transforme sua vida e suas relações.
@@ -871,7 +996,7 @@
             <!-- Devocionais compartilhados por amigos -->
             <div id="sharedTodaySection" style="display: none;">
                 <h3 style="color: var(--friend-color); margin: 30px 0 15px; padding-bottom: 10px; border-bottom: 1px solid var(--input-border);">
-                    <i class="fas fa-users"></i> Devocionais dos Amigos
+                    <i class="fas fa-users"></i> Devocionais dos Amigos Hoje
                 </h3>
                 <div id="sharedDevotionalsToday"></div>
             </div>
@@ -880,8 +1005,9 @@
         <!-- Conteúdo da aba "Adicionar" -->
         <div class="tab-content" id="add-tab">
             <div class="add-form">
-                <h2 class="form-title">Adicionar Novo Devocional</h2>
+                <h2 class="form-title" id="formTitle">Adicionar Novo Devocional</h2>
                 <form id="devotionalForm">
+                    <input type="hidden" id="devotionalId">
                     <div class="form-group">
                         <label for="devotionalDate">Data do Devocional</label>
                         <input type="date" id="devotionalDate" class="form-control" required>
@@ -907,10 +1033,48 @@
                         <label for="shareWithFriends">Compartilhar com meus amigos</label>
                     </div>
                     
-                    <button type="submit" class="btn btn-success btn-block">
+                    <button type="submit" class="btn btn-success btn-block" id="submitButton">
                         <i class="fas fa-save"></i> Salvar Devocional
                     </button>
+                    
+                    <button type="button" class="btn btn-edit btn-block" id="cancelEditButton" style="display: none; margin-top: 10px;">
+                        Cancelar Edição
+                    </button>
                 </form>
+            </div>
+        </div>
+
+        <!-- Conteúdo da aba "Navegar" -->
+        <div class="tab-content" id="browse-tab">
+            <h2 style="color: var(--primary-color); margin-bottom: 20px;">
+                <i class="fas fa-compass"></i> Navegar Devocionais
+            </h2>
+            
+            <div class="browse-controls">
+                <select id="filterType" class="filter-select">
+                    <option value="all">Todos os devocionais</option>
+                    <option value="friends">Apenas amigos</option>
+                    <option value="today">Hoje</option>
+                    <option value="week">Esta semana</option>
+                </select>
+                
+                <select id="sortBy" class="filter-select">
+                    <option value="date">Mais recentes</option>
+                    <option value="likes">Mais curtidos</option>
+                    <option value="comments">Mais comentados</option>
+                </select>
+                
+                <input type="text" id="searchInput" class="form-control" placeholder="Buscar por versículo ou mensagem..." style="flex: 1; min-width: 200px;">
+            </div>
+            
+            <div class="devotional-grid" id="browseDevotionals">
+                <!-- Devocionais serão carregados aqui -->
+            </div>
+            
+            <div id="noDevotionalsMessage" class="empty-state" style="display: none;">
+                <i class="fas fa-book-bible"></i>
+                <h3>Nenhum devocional encontrado</h3>
+                <p>Tente alterar os filtros de busca</p>
             </div>
         </div>
 
@@ -959,11 +1123,15 @@
             </div>
         </div>
 
-        <!-- Rodapé -->
-        <footer>
-            <p>Devocionais Diários &copy; <span id="currentYear">2025</span> - Compartilhando fé com amigos</p>
-            <p style="font-size: 0.8rem; margin-top: 5px;">Instale este aplicativo no seu celular para acesso offline</p>
-        </footer>
+        <!-- Modal de visualização completa -->
+        <div class="modal-overlay" id="devotionalModal">
+            <div class="modal-content">
+                <button class="modal-close" id="modalClose">&times;</button>
+                <div id="modalContent">
+                    <!-- Conteúdo do devocional será carregado aqui -->
+                </div>
+            </div>
+        </div>
 
         <!-- Tela de Autenticação -->
         <div class="auth-container" id="authContainer">
@@ -990,6 +1158,11 @@
                         <input type="password" id="loginPassword" class="form-control" placeholder="Sua senha" required minlength="6">
                     </div>
                     
+                    <div class="checkbox-group" style="margin-top: -10px;">
+                        <input type="checkbox" id="enableNotifications" checked>
+                        <label for="enableNotifications">Receber notificações</label>
+                    </div>
+                    
                     <button type="submit" class="btn btn-block">
                         <i class="fas fa-sign-in-alt"></i> Entrar
                     </button>
@@ -1011,6 +1184,11 @@
                         <input type="password" id="registerPassword" class="form-control" placeholder="Mínimo 6 caracteres" required minlength="6">
                     </div>
                     
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="registerNotifications" checked>
+                        <label for="registerNotifications">Receber notificações</label>
+                    </div>
+                    
                     <button type="submit" class="btn btn-success btn-block">
                         <i class="fas fa-user-plus"></i> Cadastrar
                     </button>
@@ -1019,18 +1197,6 @@
                 <div style="text-align: center; margin-top: 20px; font-size: 0.9rem; color: var(--footer-color);">
                     <p>Seus dados estão seguros. Usamos Firebase Authentication.</p>
                 </div>
-            </div>
-        </div>
-
-        <!-- Prompt de instalação PWA -->
-        <div class="pwa-install-prompt" id="pwaInstallPrompt">
-            <div>
-                <strong>Instalar App Devocionais</strong>
-                <p>Tenha acesso rápido aos devocionais diários!</p>
-            </div>
-            <div>
-                <button class="btn" id="pwaInstallConfirm">Instalar</button>
-                <button class="pwa-close" id="pwaInstallClose">&times;</button>
             </div>
         </div>
     </div>
@@ -1042,33 +1208,36 @@
     </div>
 
     <script>
-     
         // ==============================================
-        // CONFIGURAÇÃO DO FIREBASE (ATUALIZADA)
+        // CONFIGURAÇÃO DO FIREBASE
         // ==============================================
         const firebaseConfig = {
             apiKey: "AIzaSyD8A9Ja4LOJjIWKrK6Y6NQSsuR3oV3oOuU",
             authDomain: "devocionais-diarios-be6cb.firebaseapp.com",
-            databaseURL: "https://devocionais-diarios-be6cb-default-rtdb.firebaseio.com",  // ADICIONEI ESTA LINHA
+            databaseURL: "https://devocionais-diarios-be6cb-default-rtdb.firebaseio.com",
             projectId: "devocionais-diarios-be6cb",
             storageBucket: "devocionais-diarios-be6cb.firebasestorage.app",
             messagingSenderId: "741330351422",
             appId: "1:741330351422:web:57c26d4a88605415ac286f"
         };
-    
-        // Inicializar Firebase (versão compat - a que você já está usando)
+
+        // Inicializar Firebase
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const database = firebase.database();
-    
+        let messaging = null;
+
         // ==============================================
         // VARIÁVEIS GLOBAIS
         // ==============================================
         let currentUser = null;
-        let devotionalsData = {
-            "devotionals": []
-        };
-    
+        let currentUserData = null;
+        let devotionalsData = [];
+        let friendsDevotionals = [];
+        let allDevotionals = [];
+        let isEditing = false;
+        let editingDevotionalId = null;
+
         // ==============================================
         // ELEMENTOS DOM
         // ==============================================
@@ -1082,10 +1251,6 @@
         const devotionalList = document.getElementById('devotionalList');
         const notification = document.getElementById('notification');
         const notificationText = document.getElementById('notificationText');
-        const installButton = document.getElementById('installButton');
-        const pwaInstallPrompt = document.getElementById('pwaInstallPrompt');
-        const pwaInstallConfirm = document.getElementById('pwaInstallConfirm');
-        const pwaInstallClose = document.getElementById('pwaInstallClose');
         const themeToggle = document.getElementById('themeToggle');
         const themeIcon = themeToggle.querySelector('i');
         const authButton = document.getElementById('authButton');
@@ -1100,10 +1265,15 @@
         const userName = document.getElementById('userName');
         const searchFriendBtn = document.getElementById('searchFriendBtn');
         const searchFriendInput = document.getElementById('searchFriendInput');
-        
-        // Variável para controlar o prompt de instalação PWA
-        let deferredPrompt;
-    
+        const notificationsToggle = document.getElementById('notificationsToggle');
+        const devotionalModal = document.getElementById('devotionalModal');
+        const modalClose = document.getElementById('modalClose');
+        const modalContent = document.getElementById('modalContent');
+        const formTitle = document.getElementById('formTitle');
+        const submitButton = document.getElementById('submitButton');
+        const cancelEditButton = document.getElementById('cancelEditButton');
+        const devotionalIdInput = document.getElementById('devotionalId');
+
         // ==============================================
         // FUNÇÕES UTILITÁRIAS
         // ==============================================
@@ -1114,17 +1284,18 @@
             const options = { day: 'numeric', month: 'long', year: 'numeric' };
             return date.toLocaleDateString('pt-BR', options);
         }
-    
+
         // Mostrar notificação
-        function showNotification(message) {
+        function showNotification(message, type = 'success') {
             notificationText.textContent = message;
+            notification.className = 'notification ' + type;
             notification.classList.add('show');
             
             setTimeout(() => {
                 notification.classList.remove('show');
             }, 3000);
         }
-    
+
         // Alternar entre abas
         function switchTab(tabName) {
             tabs.forEach(t => t.classList.remove('active'));
@@ -1133,7 +1304,7 @@
             document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
             document.getElementById(`${tabName}-tab`).classList.add('active');
         }
-    
+
         // ==============================================
         // TEMA (CLARO/ESCURO)
         // ==============================================
@@ -1148,21 +1319,21 @@
                 enableLightMode();
             }
         }
-    
+
         function enableDarkMode() {
             document.body.classList.add('dark-mode');
             themeIcon.classList.remove('fa-moon');
             themeIcon.classList.add('fa-sun');
             localStorage.setItem('theme', 'dark');
         }
-    
+
         function enableLightMode() {
             document.body.classList.remove('dark-mode');
             themeIcon.classList.remove('fa-sun');
             themeIcon.classList.add('fa-moon');
             localStorage.setItem('theme', 'light');
         }
-    
+
         themeToggle.addEventListener('click', () => {
             if (document.body.classList.contains('dark-mode')) {
                 enableLightMode();
@@ -1170,7 +1341,7 @@
                 enableDarkMode();
             }
         });
-    
+
         // ==============================================
         // FUNÇÕES DE AUTENTICAÇÃO
         // ==============================================
@@ -1178,7 +1349,7 @@
         function showAuthScreen() {
             authContainer.classList.add('active');
         }
-    
+
         function hideAuthScreen() {
             authContainer.classList.remove('active');
             loginForm.reset();
@@ -1189,7 +1360,7 @@
             loginForm.style.display = 'block';
             registerForm.style.display = 'none';
         }
-    
+
         // Cadastro de novo usuário
         registerForm.addEventListener('submit', function(e) {
             e.preventDefault();
@@ -1197,6 +1368,7 @@
             const name = document.getElementById('registerName').value;
             const email = document.getElementById('registerEmail').value;
             const password = document.getElementById('registerPassword').value;
+            const enableNotifications = document.getElementById('registerNotifications').checked;
             
             auth.createUserWithEmailAndPassword(email, password)
                 .then((userCredential) => {
@@ -1210,6 +1382,7 @@
                         return database.ref('users/' + user.uid).set({
                             name: name,
                             email: email,
+                            notificationsEnabled: enableNotifications,
                             createdAt: firebase.database.ServerValue.TIMESTAMP
                         });
                     });
@@ -1217,43 +1390,73 @@
                 .then(() => {
                     showNotification('Cadastro realizado com sucesso!');
                     hideAuthScreen();
+                    
+                    // Solicitar permissão para notificações
+                    if (enableNotifications) {
+                        requestNotificationPermission();
+                    }
                 })
                 .catch((error) => {
-                    showNotification('Erro no cadastro: ' + error.message);
+                    showNotification('Erro no cadastro: ' + error.message, 'error');
                 });
         });
-    
+
         // Login de usuário
         loginForm.addEventListener('submit', function(e) {
             e.preventDefault();
             
             const email = document.getElementById('loginEmail').value;
             const password = document.getElementById('loginPassword').value;
+            const enableNotifications = document.getElementById('enableNotifications').checked;
             
             auth.signInWithEmailAndPassword(email, password)
                 .then(() => {
+                    // Atualizar preferências de notificação
+                    if (currentUser) {
+                        database.ref('users/' + currentUser.uid + '/notificationsEnabled').set(enableNotifications);
+                    }
+                    
                     showNotification('Login realizado com sucesso!');
                     hideAuthScreen();
+                    
+                    // Solicitar permissão para notificações
+                    if (enableNotifications) {
+                        requestNotificationPermission();
+                    }
                 })
                 .catch((error) => {
-                    showNotification('Erro no login: ' + error.message);
+                    showNotification('Erro no login: ' + error.message, 'error');
                 });
         });
-    
+
         // Observar estado de autenticação
         auth.onAuthStateChanged((user) => {
             if (user) {
                 currentUser = user;
-                updateUIForLoggedInUser();
-                loadUserDevotionals();
-                loadFriendsDevotionals();
-                loadFriendsList();
+                loadUserData().then(() => {
+                    updateUIForLoggedInUser();
+                    loadUserDevotionals();
+                    loadAllDevotionals();
+                    loadFriendsDevotionals();
+                    loadFriendsList();
+                });
             } else {
                 currentUser = null;
+                currentUserData = null;
                 updateUIForLoggedOutUser();
             }
         });
-    
+
+        // Carregar dados do usuário
+        async function loadUserData() {
+            if (!currentUser) return;
+            
+            return database.ref('users/' + currentUser.uid).once('value')
+                .then((snapshot) => {
+                    currentUserData = snapshot.val();
+                });
+        }
+
         // Atualizar UI para usuário logado
         function updateUIForLoggedInUser() {
             authButton.innerHTML = '<i class="fas fa-sign-out-alt"></i> Sair';
@@ -1271,35 +1474,195 @@
             document.querySelector('[data-tab="add"]').style.display = 'block';
             document.querySelector('[data-tab="friends"]').style.display = 'block';
             document.querySelector('[data-tab="previous"]').style.display = 'block';
+            document.querySelector('[data-tab="browse"]').style.display = 'block';
+            
+            // Mostrar botão de notificações
+            notificationsToggle.style.display = 'flex';
         }
-    
+
         // Atualizar UI para usuário não logado
         function updateUIForLoggedOutUser() {
             authButton.innerHTML = '<i class="fas fa-user"></i> Entrar';
             authButton.onclick = showAuthScreen;
             
             userInfo.style.display = 'none';
+            notificationsToggle.style.display = 'none';
             
             // Esconder abas que precisam de login
             document.querySelector('[data-tab="add"]').style.display = 'none';
             document.querySelector('[data-tab="friends"]').style.display = 'none';
             document.querySelector('[data-tab="previous"]').style.display = 'none';
+            document.querySelector('[data-tab="browse"]').style.display = 'none';
             
             // Se estiver em uma aba que precisa de login, voltar para "Hoje"
             const activeTab = document.querySelector('.tab.active');
-            if (activeTab && ['add', 'friends', 'previous'].includes(activeTab.dataset.tab)) {
+            if (activeTab && ['add', 'friends', 'previous', 'browse'].includes(activeTab.dataset.tab)) {
                 switchTab('today');
             }
         }
-    
+
         // ==============================================
-        // FUNÇÕES DO BANCO DE DADOS
+        // FUNÇÕES DE NOTIFICAÇÕES PUSH
         // ==============================================
-    
+        
+        function requestNotificationPermission() {
+            if (!('Notification' in window)) {
+                console.log('Este navegador não suporta notificações desktop');
+                return;
+            }
+            
+            if (Notification.permission === 'granted') {
+                initFirebaseMessaging();
+            } else if (Notification.permission !== 'denied') {
+                Notification.requestPermission().then((permission) => {
+                    if (permission === 'granted') {
+                        initFirebaseMessaging();
+                    }
+                });
+            }
+        }
+
+        function initFirebaseMessaging() {
+            try {
+                messaging = firebase.messaging();
+                
+                // Solicitar token de notificação
+                messaging.getToken({ vapidKey: 'BElVlqj9oBHE9Kd-cZxYqL_fsGvkl-6LbZgZ4G8zZ4M4Xqo4Q4q4Xqo4Q4q4Xqo4Q4q4Xqo4Q4q4Xqo4Q' })
+                    .then((currentToken) => {
+                        if (currentToken && currentUser) {
+                            // Salvar token no banco de dados
+                            database.ref('notificationTokens/' + currentUser.uid).set(currentToken);
+                        }
+                    })
+                    .catch((err) => {
+                        console.log('Erro ao obter token:', err);
+                    });
+
+                // Lidar com mensagens recebidas em primeiro plano
+                messaging.onMessage((payload) => {
+                    showNotification(payload.notification.title + ': ' + payload.notification.body, 'info');
+                    
+                    // Atualizar indicador de notificações
+                    notificationsToggle.classList.add('has-notifications');
+                });
+            } catch (error) {
+                console.log('Erro ao inicializar Firebase Messaging:', error);
+            }
+        }
+
+        // Enviar notificação para amigos
+        function sendNotificationToFriends(devotionalTitle, userName) {
+            if (!currentUser) return;
+            
+            // Buscar tokens de notificação dos amigos
+            database.ref('friendships/' + currentUser.uid).once('value')
+                .then((snapshot) => {
+                    const friends = [];
+                    snapshot.forEach((childSnapshot) => {
+                        friends.push(childSnapshot.key);
+                    });
+                    
+                    friends.forEach(friendId => {
+                        // Buscar token do amigo
+                        database.ref('notificationTokens/' + friendId).once('value')
+                            .then((tokenSnapshot) => {
+                                const token = tokenSnapshot.val();
+                                if (token) {
+                                    // Aqui você precisaria de um servidor backend para enviar notificações
+                                    // Esta é uma implementação simplificada
+                                    console.log('Notificação para:', friendId, 'Token:', token);
+                                }
+                            });
+                    });
+                });
+        }
+
+        // ==============================================
+        // FUNÇÕES DE INTERAÇÃO (CURTIR, COMENTAR)
+        // ==============================================
+
+        // Curtir devocional
+        function likeDevotional(devotionalId) {
+            if (!currentUser) {
+                showNotification('Faça login para curtir devocionais', 'error');
+                showAuthScreen();
+                return;
+            }
+            
+            const likeRef = database.ref('likes/' + devotionalId + '/' + currentUser.uid);
+            
+            likeRef.once('value').then((snapshot) => {
+                if (snapshot.exists()) {
+                    // Remover curtida
+                    likeRef.remove();
+                } else {
+                    // Adicionar curtida
+                    likeRef.set({
+                        timestamp: firebase.database.ServerValue.TIMESTAMP
+                    });
+                }
+            });
+        }
+
+        // Adicionar comentário
+        function addComment(devotionalId, commentText) {
+            if (!currentUser) {
+                showNotification('Faça login para comentar', 'error');
+                showAuthScreen();
+                return;
+            }
+            
+            if (!commentText.trim()) {
+                showNotification('Digite um comentário', 'error');
+                return;
+            }
+            
+            const commentRef = database.ref('comments/' + devotionalId).push();
+            
+            commentRef.set({
+                userId: currentUser.uid,
+                userName: currentUser.displayName || currentUser.email.split('@')[0],
+                comment: commentText,
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            }).then(() => {
+                showNotification('Comentário adicionado!');
+            });
+        }
+
+        // Carregar curtidas
+        function loadLikes(devotionalId, callback) {
+            database.ref('likes/' + devotionalId).once('value')
+                .then((snapshot) => {
+                    const likes = snapshot.val() || {};
+                    callback(Object.keys(likes).length, likes[currentUser ? currentUser.uid : '']);
+                });
+        }
+
+        // Carregar comentários
+        function loadComments(devotionalId, callback) {
+            database.ref('comments/' + devotionalId).once('value')
+                .then((snapshot) => {
+                    const comments = [];
+                    snapshot.forEach((childSnapshot) => {
+                        const comment = childSnapshot.val();
+                        comment.id = childSnapshot.key;
+                        comments.push(comment);
+                    });
+                    
+                    // Ordenar por timestamp (mais recente primeiro)
+                    comments.sort((a, b) => b.timestamp - a.timestamp);
+                    callback(comments);
+                });
+        }
+
+        // ==============================================
+        // FUNÇÕES DO BANCO DE DADOS (DEVOÇÕES)
+        // ==============================================
+
         // Salvar devocional no Firebase
         function saveDevotionalToFirebase(date, verse, reference, message, shareWithFriends) {
             if (!currentUser) {
-                showNotification('Você precisa estar logado para adicionar devocionais');
+                showNotification('Você precisa estar logado para adicionar devocionais', 'error');
                 showAuthScreen();
                 return;
             }
@@ -1315,19 +1678,114 @@
                 createdAt: firebase.database.ServerValue.TIMESTAMP
             };
             
-            // Salvar no Firebase
-            const newDevotionalRef = database.ref('devotionals').push();
-            newDevotionalRef.set(devotionalData)
+            let savePromise;
+            
+            if (isEditing && editingDevotionalId) {
+                // Atualizar devocional existente
+                savePromise = database.ref('devotionals/' + editingDevotionalId).update(devotionalData);
+            } else {
+                // Criar novo devocional
+                const newDevotionalRef = database.ref('devotionals').push();
+                editingDevotionalId = newDevotionalRef.key;
+                savePromise = newDevotionalRef.set(devotionalData);
+            }
+            
+            savePromise
                 .then(() => {
-                    showNotification('Devocional salvo com sucesso!');
+                    showNotification(isEditing ? 'Devocional atualizado com sucesso!' : 'Devocional salvo com sucesso!');
+                    
+                    // Enviar notificações para amigos
+                    if (shareWithFriends && !isEditing) {
+                        sendNotificationToFriends(reference, devotionalData.userName);
+                    }
+                    
+                    // Resetar formulário
+                    resetDevotionalForm();
                     loadUserDevotionals();
+                    loadAllDevotionals();
                     loadFriendsDevotionals();
+                    
+                    // Voltar para aba "Meus"
+                    switchTab('previous');
                 })
                 .catch((error) => {
-                    showNotification('Erro ao salvar: ' + error.message);
+                    showNotification('Erro ao salvar: ' + error.message, 'error');
                 });
         }
-    
+
+        // Editar devocional
+        function editDevotional(devotionalId) {
+            database.ref('devotionals/' + devotionalId).once('value')
+                .then((snapshot) => {
+                    const devotional = snapshot.val();
+                    if (devotional) {
+                        isEditing = true;
+                        editingDevotionalId = devotionalId;
+                        
+                        // Preencher formulário
+                        document.getElementById('devotionalDate').value = devotional.date;
+                        document.getElementById('verse').value = devotional.verse;
+                        document.getElementById('reference').value = devotional.reference;
+                        document.getElementById('message').value = devotional.message;
+                        document.getElementById('shareWithFriends').checked = devotional.shared || false;
+                        devotionalIdInput.value = devotionalId;
+                        
+                        // Atualizar UI do formulário
+                        formTitle.textContent = 'Editar Devocional';
+                        submitButton.innerHTML = '<i class="fas fa-save"></i> Atualizar Devocional';
+                        cancelEditButton.style.display = 'block';
+                        
+                        // Ir para aba "Adicionar"
+                        switchTab('add');
+                    }
+                });
+        }
+
+        // Excluir devocional
+        function deleteDevotional(devotionalId) {
+            if (confirm('Tem certeza que deseja excluir este devocional?')) {
+                database.ref('devotionals/' + devotionalId).remove()
+                    .then(() => {
+                        showNotification('Devocional excluído com sucesso!');
+                        loadUserDevotionals();
+                        loadAllDevotionals();
+                        loadFriendsDevotionals();
+                    })
+                    .catch((error) => {
+                        showNotification('Erro ao excluir: ' + error.message, 'error');
+                    });
+            }
+        }
+
+        // Resetar formulário
+        function resetDevotionalForm() {
+            devotionalForm.reset();
+            isEditing = false;
+            editingDevotionalId = null;
+            devotionalIdInput.value = '';
+            formTitle.textContent = 'Adicionar Novo Devocional';
+            submitButton.innerHTML = '<i class="fas fa-save"></i> Salvar Devocional';
+            cancelEditButton.style.display = 'none';
+            document.getElementById('devotionalDate').value = '2025-12-23';
+        }
+
+        // Carregar todos os devocionais
+        function loadAllDevotionals() {
+            database.ref('devotionals').once('value')
+                .then((snapshot) => {
+                    allDevotionals = [];
+                    snapshot.forEach((childSnapshot) => {
+                        const devotional = childSnapshot.val();
+                        devotional.id = childSnapshot.key;
+                        allDevotionals.push(devotional);
+                    });
+                    
+                    // Ordenar por data (mais recente primeiro)
+                    allDevotionals.sort((a, b) => new Date(b.date) - new Date(a.date));
+                    displayBrowseDevotionals(allDevotionals);
+                });
+        }
+
         // Carregar devocionais do usuário
         function loadUserDevotionals() {
             if (!currentUser) return;
@@ -1349,7 +1807,7 @@
                     displayUserDevotionals(devotionals);
                 });
         }
-    
+
         // Carregar devocionais dos amigos
         function loadFriendsDevotionals() {
             if (!currentUser) return;
@@ -1375,7 +1833,7 @@
                     displayFriendsDevotionals(devotionals);
                 });
         }
-    
+
         // Carregar lista de amigos
         function loadFriendsList() {
             if (!currentUser) return;
@@ -1394,7 +1852,7 @@
                     }
                 });
         }
-    
+
         // Buscar usuário por email
         function searchUserByEmail(email) {
             database.ref('users').orderByChild('email').equalTo(email).once('value')
@@ -1412,7 +1870,7 @@
                     displaySearchResults(results);
                 });
         }
-    
+
         // Adicionar amigo
         function addFriend(friendId) {
             if (!currentUser) return;
@@ -1423,14 +1881,14 @@
                     loadFriendsList();
                 })
                 .catch((error) => {
-                    showNotification('Erro ao adicionar amigo: ' + error.message);
+                    showNotification('Erro ao adicionar amigo: ' + error.message, 'error');
                 });
         }
-    
+
         // ==============================================
         // FUNÇÕES DE EXIBIÇÃO
         // ==============================================
-    
+
         // Exibir devocionais do usuário
         function displayUserDevotionals(devotionals) {
             const container = document.getElementById('devotionalList');
@@ -1459,12 +1917,186 @@
                         <p><strong>Versículo:</strong> ${devotional.verse.substring(0, 100)}${devotional.verse.length > 100 ? '...' : ''}</p>
                         <p><strong>Mensagem:</strong> ${devotional.message.substring(0, 150)}${devotional.message.length > 150 ? '...' : ''}</p>
                     </div>
+                    <div style="margin-top: 10px; display: flex; gap: 10px;">
+                        <button class="btn" onclick="viewDevotional('${devotional.id}')">
+                            <i class="fas fa-eye"></i> Ver
+                        </button>
+                        <button class="btn btn-edit" onclick="editDevotional('${devotional.id}')">
+                            <i class="fas fa-edit"></i> Editar
+                        </button>
+                        <button class="btn" style="background-color: var(--accent-color)" onclick="deleteDevotional('${devotional.id}')">
+                            <i class="fas fa-trash"></i> Excluir
+                        </button>
+                    </div>
                 `;
                 
                 container.appendChild(devotionalItem);
             });
         }
-    
+
+        // Exibir devocionais para navegação
+        function displayBrowseDevotionals(devotionals) {
+            const container = document.getElementById('browseDevotionals');
+            const noDevotionalsMessage = document.getElementById('noDevotionalsMessage');
+            
+            if (devotionals.length === 0) {
+                container.innerHTML = '';
+                noDevotionalsMessage.style.display = 'block';
+                return;
+            }
+            
+            noDevotionalsMessage.style.display = 'none';
+            container.innerHTML = '';
+            
+            devotionals.forEach(devotional => {
+                // Carregar curtidas para este devocional
+                loadLikes(devotional.id, (likeCount, userLiked) => {
+                    loadComments(devotional.id, (comments) => {
+                        const devotionalItem = document.createElement('div');
+                        devotionalItem.className = 'devotional-item';
+                        devotionalItem.innerHTML = `
+                            <div class="devotional-item-header">
+                                <div class="devotional-item-title">${devotional.reference}</div>
+                                <div class="devotional-item-date">${formatDate(devotional.date)}</div>
+                            </div>
+                            <div class="devotional-author" style="margin-bottom: 10px;">
+                                <div class="author-avatar ${devotional.userId === (currentUser ? currentUser.uid : '') ? 'my-avatar' : ''}">
+                                    ${devotional.userName ? devotional.userName[0].toUpperCase() : 'A'}
+                                </div>
+                                <div class="author-info">
+                                    <h4>${devotional.userName || 'Usuário'}</h4>
+                                </div>
+                            </div>
+                            <div class="devotional-item-content">
+                                <p><strong>Versículo:</strong> ${devotional.verse.substring(0, 80)}${devotional.verse.length > 80 ? '...' : ''}</p>
+                            </div>
+                            <div style="margin-top: 15px; display: flex; justify-content: space-between; align-items: center;">
+                                <div style="display: flex; gap: 15px;">
+                                    <button class="action-btn like-btn ${userLiked ? 'liked' : ''}" onclick="likeDevotional('${devotional.id}')">
+                                        <i class="fas fa-heart"></i>
+                                        <span class="like-count">${likeCount}</span>
+                                    </button>
+                                    <button class="action-btn" onclick="viewDevotional('${devotional.id}')">
+                                        <i class="fas fa-comment"></i>
+                                        <span class="comment-count">${comments.length}</span>
+                                    </button>
+                                </div>
+                                <button class="btn" onclick="viewDevotional('${devotional.id}')">
+                                    Ler mais
+                                </button>
+                            </div>
+                        `;
+                        
+                        container.appendChild(devotionalItem);
+                    });
+                });
+            });
+        }
+
+        // Exibir devocional completo no modal
+        function viewDevotional(devotionalId) {
+            database.ref('devotionals/' + devotionalId).once('value')
+                .then((snapshot) => {
+                    const devotional = snapshot.val();
+                    if (devotional) {
+                        devotional.id = devotionalId;
+                        
+                        // Carregar curtidas e comentários
+                        loadLikes(devotionalId, (likeCount, userLiked) => {
+                            loadComments(devotionalId, (comments) => {
+                                displayDevotionalModal(devotional, likeCount, userLiked, comments);
+                            });
+                        });
+                    }
+                });
+        }
+
+        // Exibir modal com devocional completo
+        function displayDevotionalModal(devotional, likeCount, userLiked, comments) {
+            const isOwner = currentUser && devotional.userId === currentUser.uid;
+            
+            modalContent.innerHTML = `
+                <div class="devotional-card ${isOwner ? 'my-devotional' : 'shared-devotional'}">
+                    <div class="devotional-author">
+                        <div class="author-avatar ${isOwner ? 'my-avatar' : ''}">
+                            ${devotional.userName ? devotional.userName[0].toUpperCase() : 'A'}
+                        </div>
+                        <div class="author-info">
+                            <h4>${devotional.userName || 'Usuário'}</h4>
+                            <div class="date">${formatDate(devotional.date)}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="verse-content">${devotional.verse}</div>
+                    <div class="verse-reference">${devotional.reference}</div>
+                    
+                    <div class="message-content">${devotional.message}</div>
+                    
+                    <div class="devotional-actions">
+                        <div class="action-left">
+                            <button class="action-btn like-btn ${userLiked ? 'liked' : ''}" onclick="likeDevotional('${devotional.id}')">
+                                <i class="fas fa-heart"></i>
+                                <span class="like-count">${likeCount} curtidas</span>
+                            </button>
+                            <button class="action-btn" onclick="toggleComments('${devotional.id}')">
+                                <i class="fas fa-comment"></i>
+                                <span class="comment-count">${comments.length} comentários</span>
+                            </button>
+                        </div>
+                        
+                        ${isOwner ? `
+                            <div>
+                                <button class="action-btn edit-btn" onclick="editDevotional('${devotional.id}'); devotionalModal.classList.remove('active');">
+                                    <i class="fas fa-edit"></i> Editar
+                                </button>
+                                <button class="action-btn delete-btn" onclick="deleteDevotional('${devotional.id}'); devotionalModal.classList.remove('active');">
+                                    <i class="fas fa-trash"></i> Excluir
+                                </button>
+                            </div>
+                        ` : ''}
+                    </div>
+                    
+                    <div class="comments-section" id="commentsSection-${devotional.id}">
+                        <h4 class="comments-title">Comentários</h4>
+                        
+                        <div class="comments-list" id="commentsList-${devotional.id}">
+                            ${comments.length > 0 ? comments.map(comment => `
+                                <div class="comment-item">
+                                    <div class="comment-author">${comment.userName}</div>
+                                    <div class="comment-content">${comment.comment}</div>
+                                    <div class="comment-date">${formatDate(new Date(comment.timestamp).toISOString())}</div>
+                                </div>
+                            `).join('') : '<p style="color: var(--footer-color); text-align: center;">Nenhum comentário ainda</p>'}
+                        </div>
+                        
+                        <div class="add-comment-form">
+                            <input type="text" class="comment-input" id="commentInput-${devotional.id}" placeholder="Adicione um comentário...">
+                            <button class="comment-submit" onclick="submitComment('${devotional.id}')">Enviar</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            devotionalModal.classList.add('active');
+        }
+
+        // Alternar visibilidade dos comentários
+        function toggleComments(devotionalId) {
+            const commentsSection = document.getElementById(`commentsSection-${devotionalId}`);
+            if (commentsSection) {
+                commentsSection.classList.toggle('expanded');
+            }
+        }
+
+        // Enviar comentário
+        function submitComment(devotionalId) {
+            const commentInput = document.getElementById(`commentInput-${devotionalId}`);
+            const commentText = commentInput.value;
+            
+            addComment(devotionalId, commentText);
+            commentInput.value = '';
+        }
+
         // Exibir devocionais dos amigos
         function displayFriendsDevotionals(devotionals) {
             const container = document.getElementById('friendsDevotionals');
@@ -1483,7 +2115,7 @@
             }
             
             // Filtrar devocionais de hoje
-            const today = new Date().toISOString().split('T')[0];
+            const today = new Date(2025, 11, 23).toISOString().split('T')[0];
             const todayDevotionals = devotionals.filter(d => d.date === today);
             
             // Exibir devocionais de hoje na aba "Hoje"
@@ -1492,7 +2124,9 @@
                 todayContainer.innerHTML = '';
                 
                 todayDevotionals.forEach(devotional => {
-                    todayContainer.innerHTML += createDevotionalCardHTML(devotional);
+                    loadLikes(devotional.id, (likeCount, userLiked) => {
+                        todayContainer.innerHTML += createDevotionalCardHTML(devotional, likeCount, userLiked);
+                    });
                 });
             } else {
                 document.getElementById('sharedTodaySection').style.display = 'none';
@@ -1501,35 +2135,53 @@
             // Exibir todos os devocionais na aba "Amigos"
             container.innerHTML = '';
             devotionals.forEach(devotional => {
-                container.innerHTML += createDevotionalCardHTML(devotional);
+                loadLikes(devotional.id, (likeCount, userLiked) => {
+                    container.innerHTML += createDevotionalCardHTML(devotional, likeCount, userLiked);
+                });
             });
         }
-    
+
         // Criar HTML do card de devocional
-        function createDevotionalCardHTML(devotional) {
+        function createDevotionalCardHTML(devotional, likeCount, userLiked) {
             return `
                 <div class="devotional-card shared-devotional">
                     <div class="devotional-author">
-                        <div class="author-avatar">${devotional.userName ? devotional.userName[0].toUpperCase() : 'A'}</div>
+                        <div class="author-avatar">
+                            ${devotional.userName ? devotional.userName[0].toUpperCase() : 'A'}
+                        </div>
                         <div class="author-info">
                             <h4>${devotional.userName || 'Amigo'}</h4>
                             <div class="date">${formatDate(devotional.date)}</div>
                         </div>
                     </div>
-                    <div class="verse-content">${devotional.verse}</div>
+                    <div class="verse-content">${devotional.verse.substring(0, 150)}${devotional.verse.length > 150 ? '...' : ''}</div>
                     <div class="verse-reference">${devotional.reference}</div>
-                    <div class="message-content">${devotional.message}</div>
+                    
+                    <div class="devotional-actions">
+                        <div class="action-left">
+                            <button class="action-btn like-btn ${userLiked ? 'liked' : ''}" onclick="likeDevotional('${devotional.id}')">
+                                <i class="fas fa-heart"></i>
+                                <span class="like-count">${likeCount}</span>
+                            </button>
+                            <button class="action-btn" onclick="viewDevotional('${devotional.id}')">
+                                <i class="fas fa-comment"></i> Comentar
+                            </button>
+                        </div>
+                        <button class="btn" onclick="viewDevotional('${devotional.id}')">
+                            Ler completo
+                        </button>
+                    </div>
                 </div>
             `;
         }
-    
+
         // Exibir resultados da busca
         function displaySearchResults(results) {
             const container = document.getElementById('searchResults');
             const list = document.getElementById('searchResultsList');
             
             if (results.length === 0) {
-                list.innerHTML = '<p>Nenhum usuário encontrado com este email</p>';
+                list.innerHTML = '<p style="color: var(--footer-color);">Nenhum usuário encontrado com este email</p>';
                 container.style.display = 'block';
                 return;
             }
@@ -1552,13 +2204,13 @@
             
             container.style.display = 'block';
         }
-    
+
         // Exibir mensagem de "sem amigos"
         function showNoFriendsMessage() {
             document.getElementById('noFriendsMessage').style.display = 'block';
             document.getElementById('friendsList').innerHTML = '';
         }
-    
+
         // Carregar informações dos amigos
         function loadFriendsInfo(friendIds) {
             document.getElementById('noFriendsMessage').style.display = 'none';
@@ -1582,77 +2234,51 @@
                     });
             });
         }
-    
-        // ==============================================
-// INICIALIZAÇÃO (DATA FIXA 23/12/2025)
-// ==============================================
 
-function init() {
-    // Configurar tema
-    initTheme();
-    
-    // DATA ESPECÍFICA: 23 de dezembro de 2025
-    const targetDate = new Date(2025, 11, 23); // Mês 11 = Dezembro (0-indexed)
-    
-    // Formatar data para exibição
-    const options = { 
-        weekday: 'long', 
-        day: 'numeric', 
-        month: 'long', 
-        year: 'numeric' 
-    };
-    const formattedDate = targetDate.toLocaleDateString('pt-BR', options);
-    
-    // Atualizar data no cabeçalho
-    currentDateElement.textContent = formattedDate;
-    
-    // Atualizar datas nos cards do devocional do dia
-    document.getElementById('verseDate').textContent = formatDate('2025-12-23');
-    document.getElementById('messageDate').textContent = formatDate('2025-12-23');
-    
-    // Definir data padrão no formulário como 23/12/2025
-    document.getElementById('devotionalDate').value = '2025-12-23';
-    
-    // CONFIGURAR ANO CORRETO NO RODAPÉ
-    document.getElementById('currentYear').textContent = 2025;
-    
-    // Carregar dados locais (para não-logados)
-    loadLocalDevotionals();
-    
-    console.log('✅ Data configurada: 23 de dezembro de 2025');
-}
-    
-        // Carregar dados locais (sem login)
-        function loadLocalDevotionals() {
-            const savedDevotionals = localStorage.getItem('devotionalsData');
-            if (savedDevotionals) {
-                devotionalsData = JSON.parse(savedDevotionals);
-                devotionalsData.devotionals.sort((a, b) => new Date(b.date) - new Date(a.date));
-                
-                if (devotionalsData.devotionals.length > 0) {
-                    const todayDevotional = devotionalsData.devotionals[0];
-                    verseContentElement.textContent = todayDevotional.verse;
-                    verseReferenceElement.textContent = todayDevotional.reference;
-                    document.getElementById('verseDate').textContent = formatDate(todayDevotional.date);
-                    
-                    messageContentElement.textContent = todayDevotional.message;
-                    document.getElementById('messageDate').textContent = formatDate(todayDevotional.date);
-                }
-            }
+        // ==============================================
+        // INICIALIZAÇÃO
+        // ==============================================
+
+        function init() {
+            // Configurar tema
+            initTheme();
+            
+            // Configurar data específica: 23 de dezembro de 2025
+            const targetDate = new Date(2025, 11, 23);
+            const options = { 
+                weekday: 'long', 
+                day: 'numeric', 
+                month: 'long', 
+                year: 'numeric' 
+            };
+            const formattedDate = targetDate.toLocaleDateString('pt-BR', options);
+            
+            currentDateElement.textContent = formattedDate;
+            document.getElementById('verseDate').textContent = formatDate('2025-12-23');
+            document.getElementById('messageDate').textContent = formatDate('2025-12-23');
+            document.getElementById('devotionalDate').value = '2025-12-23';
+            document.getElementById('currentYear').textContent = 2025;
+            
+            console.log('✅ Aplicativo inicializado - Data: 23 de dezembro de 2025');
         }
-    
+
         // ==============================================
         // EVENT LISTENERS
         // ==============================================
-    
+
         // Navegação por abas
         tabs.forEach(tab => {
             tab.addEventListener('click', () => {
                 const tabId = tab.getAttribute('data-tab');
                 switchTab(tabId);
+                
+                // Recarregar dados se necessário
+                if (tabId === 'browse') {
+                    loadAllDevotionals();
+                }
             });
         });
-    
+
         // Envio do formulário de devocional
         devotionalForm.addEventListener('submit', function(e) {
             e.preventDefault();
@@ -1663,17 +2289,12 @@ function init() {
             const message = document.getElementById('message').value;
             const shareWithFriends = document.getElementById('shareWithFriends').checked;
             
-            // Salvar no Firebase
             saveDevotionalToFirebase(date, verse, reference, message, shareWithFriends);
-            
-            // Limpar formulário
-            this.reset();
-            document.getElementById('devotionalDate').valueAsDate = new Date();
-            
-            // Voltar para aba "Hoje"
-            switchTab('today');
         });
-    
+
+        // Cancelar edição
+        cancelEditButton.addEventListener('click', resetDevotionalForm);
+
         // Buscar amigos
         searchFriendBtn.addEventListener('click', function() {
             const email = searchFriendInput.value;
@@ -1681,7 +2302,7 @@ function init() {
                 searchUserByEmail(email);
             }
         });
-    
+
         // Alternar entre login e cadastro
         loginTab.addEventListener('click', function() {
             loginTab.classList.add('active');
@@ -1689,74 +2310,92 @@ function init() {
             loginForm.style.display = 'block';
             registerForm.style.display = 'none';
         });
-    
+
         registerTab.addEventListener('click', function() {
             registerTab.classList.add('active');
             loginTab.classList.remove('active');
             registerForm.style.display = 'block';
             loginForm.style.display = 'none';
         });
-    
-        // Fechar tela de autenticação
+
+        // Fechar modais
         authClose.addEventListener('click', hideAuthScreen);
-    
-        // PWA - Instalação
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            installButton.style.display = 'block';
-            
-            setTimeout(() => {
-                pwaInstallPrompt.classList.add('show');
-            }, 3000);
+        modalClose.addEventListener('click', () => {
+            devotionalModal.classList.remove('active');
         });
-    
-        installButton.addEventListener('click', async () => {
-            if (!deferredPrompt) return;
+
+        // Fechar modal ao clicar fora
+        devotionalModal.addEventListener('click', (e) => {
+            if (e.target === devotionalModal) {
+                devotionalModal.classList.remove('active');
+            }
+        });
+
+        // Notificações
+        notificationsToggle.addEventListener('click', () => {
+            requestNotificationPermission();
+            notificationsToggle.classList.remove('has-notifications');
+        });
+
+        // Filtros na aba "Navegar"
+        document.getElementById('filterType').addEventListener('change', filterDevotionals);
+        document.getElementById('sortBy').addEventListener('change', filterDevotionals);
+        document.getElementById('searchInput').addEventListener('input', filterDevotionals);
+
+        function filterDevotionals() {
+            const filterType = document.getElementById('filterType').value;
+            const sortBy = document.getElementById('sortBy').value;
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             
-            deferredPrompt.prompt();
-            const { outcome } = await deferredPrompt.userChoice;
+            let filtered = [...allDevotionals];
             
-            if (outcome === 'accepted') {
-                showNotification('Aplicativo instalado com sucesso!');
-                installButton.style.display = 'none';
-                pwaInstallPrompt.classList.remove('show');
+            // Aplicar filtro por tipo
+            if (filterType === 'friends' && currentUser) {
+                // Filtrar apenas devocionais de amigos
+                filtered = filtered.filter(d => {
+                    // Verificar se é amigo (simplificado)
+                    return d.userId !== currentUser.uid;
+                });
+            } else if (filterType === 'today') {
+                const today = new Date(2025, 11, 23).toISOString().split('T')[0];
+                filtered = filtered.filter(d => d.date === today);
+            } else if (filterType === 'week') {
+                const today = new Date(2025, 11, 23);
+                const weekAgo = new Date(today);
+                weekAgo.setDate(weekAgo.getDate() - 7);
+                
+                filtered = filtered.filter(d => {
+                    const devotionalDate = new Date(d.date);
+                    return devotionalDate >= weekAgo && devotionalDate <= today;
+                });
             }
             
-            deferredPrompt = null;
-        });
-    
-        pwaInstallConfirm.addEventListener('click', async () => {
-            if (!deferredPrompt) return;
-            
-            deferredPrompt.prompt();
-            const { outcome } = await deferredPrompt.userChoice;
-            
-            if (outcome === 'accepted') {
-                showNotification('Aplicativo instalado com sucesso!');
-                installButton.style.display = 'none';
+            // Aplicar busca
+            if (searchTerm) {
+                filtered = filtered.filter(d => 
+                    d.verse.toLowerCase().includes(searchTerm) || 
+                    d.message.toLowerCase().includes(searchTerm) ||
+                    d.reference.toLowerCase().includes(searchTerm)
+                );
             }
             
-            pwaInstallPrompt.classList.remove('show');
-            deferredPrompt = null;
-        });
-    
-        pwaInstallClose.addEventListener('click', () => {
-            pwaInstallPrompt.classList.remove('show');
-        });
-    
-        window.addEventListener('appinstalled', () => {
-            installButton.style.display = 'none';
-            pwaInstallPrompt.classList.remove('show');
-            deferredPrompt = null;
-        });
-    
+            // Aplicar ordenação
+            if (sortBy === 'likes') {
+                // Para ordenar por curtidas, precisaríamos carregar as curtidas primeiro
+                // Esta é uma implementação simplificada
+                filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+            } else if (sortBy === 'comments') {
+                // Para ordenar por comentários, similar ao acima
+                filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+            } else {
+                filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+            }
+            
+            displayBrowseDevotionals(filtered);
+        }
+
         // Inicializar o aplicativo
         document.addEventListener('DOMContentLoaded', init);
     </script>
-    </body>
-    </html>
-
-
-
-
+</body>
+</html>
